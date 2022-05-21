@@ -10,7 +10,7 @@ const WHITE: RGB = RGB {
     b: 255,
 };
 
-fn line<T: ColorSpace + Copy + Eq>(
+fn line<T: ColorSpace + Copy>(
     mut x0: isize,
     mut y0: isize,
     mut x1: isize,

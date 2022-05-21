@@ -6,6 +6,64 @@ unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
     ::std::slice::from_raw_parts((p as *const T) as *const u8, ::std::mem::size_of::<T>())
 }
 
+pub trait ColorSpace {
+    fn new() -> Self;
+    const BPP: u8;
+}
+
+#[derive(Copy, Clone)]
+pub struct Grayscale {
+    pub i: u8,
+}
+#[derive(Copy, Clone)]
+pub struct RGB {
+    pub b: u8,
+    pub g: u8,
+    pub r: u8,
+}
+#[derive(Copy, Clone)]
+pub struct RGBA {
+    pub b: u8,
+    pub g: u8,
+    pub r: u8,
+    pub a: u8,
+}
+
+impl ColorSpace for Grayscale {
+    fn new() -> Self {
+        Grayscale { i: 0 }
+    }
+    const BPP: u8 = 1;
+}
+impl ColorSpace for RGB {
+    fn new() -> Self {
+        RGB { r: 0, g: 0, b: 0 }
+    }
+    const BPP: u8 = 3;
+}
+impl ColorSpace for RGBA {
+    fn new() -> Self {
+        RGBA {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 0,
+        }
+    }
+    const BPP: u8 = 4;
+}
+
+pub struct Image<T: ColorSpace> {
+    width: usize,
+    height: usize,
+    data: Vec<T>,
+}
+
+const DEVELOPER_AREA_REF: [u8; 4] = [0, 0, 0, 0];
+const EXTENSION_AREA_REF: [u8; 4] = [0, 0, 0, 0];
+const FOOTER: &[u8; 18] = b"TRUEVISION-XFILE.\0";
+const MAX_CHUNK_LENGTH: u8 = 128;
+
 #[derive(Default)]
 #[repr(packed)]
 #[allow(dead_code)]
@@ -24,73 +82,7 @@ struct Header {
     imagedescriptor: u8,
 }
 
-pub trait ColorSpace {
-    fn new() -> Self;
-    fn bpp() -> u8;
-}
-
-#[derive(Copy, Clone, Eq, PartialEq)]
-#[repr(packed)]
-pub struct Grayscale {
-    pub i: u8,
-}
-#[derive(Copy, Clone, Eq, PartialEq)]
-#[repr(packed)]
-pub struct RGB {
-    pub b: u8,
-    pub g: u8,
-    pub r: u8,
-}
-#[derive(Copy, Clone, Eq, PartialEq)]
-#[repr(packed)]
-pub struct RGBA {
-    pub b: u8,
-    pub g: u8,
-    pub r: u8,
-    pub a: u8,
-}
-
-pub struct Image<T: ColorSpace> {
-    width: usize,
-    height: usize,
-    data: Vec<T>,
-}
-
-impl ColorSpace for Grayscale {
-    fn new() -> Self {
-        Grayscale { i: 0 }
-    }
-    fn bpp() -> u8 {
-        1
-    }
-}
-impl ColorSpace for RGB {
-    fn new() -> Self {
-        RGB { r: 0, g: 0, b: 0 }
-    }
-    fn bpp() -> u8 {
-        3
-    }
-}
-impl ColorSpace for RGBA {
-    fn new() -> Self {
-        RGBA {
-            r: 0,
-            g: 0,
-            b: 0,
-            a: 0,
-        }
-    }
-    fn bpp() -> u8 {
-        4
-    }
-}
-
-const DEVELOPER_AREA_REF: [u8; 4] = [0, 0, 0, 0];
-const EXTENSION_AREA_REF: [u8; 4] = [0, 0, 0, 0];
-const FOOTER: &[u8; 18] = b"TRUEVISION-XFILE.\0";
-
-impl<T: ColorSpace + Copy + Eq> Image<T> {
+impl<T: ColorSpace + Copy> Image<T> {
     pub fn new(width: usize, height: usize) -> Self {
         Image {
             width,
@@ -99,9 +91,9 @@ impl<T: ColorSpace + Copy + Eq> Image<T> {
         }
     }
 
-    pub fn set(&mut self, x: usize, y: usize, color: T) -> Result<(), &'static str> {
+    pub fn set(&mut self, x: usize, y: usize, color: T) -> Result<(), String> {
         if x >= self.width || y >= self.height {
-            return Err("Coordinates out of bounds for image");
+            return Err(String::from("Coordinates out of bounds for image"));
         }
         self.data[x + y * self.width] = color;
         Ok(())
@@ -116,27 +108,20 @@ impl<T: ColorSpace + Copy + Eq> Image<T> {
     }
 
     fn write_rle_data(&self, out: &mut dyn Write) -> io::Result<()> {
-        // TODO: Learn how this works
-        const MAX_CHUNK_LENGTH: u8 = 128;
         let data = self.data_vec();
         let n_pixels = self.width * self.height;
         let mut current_pixel = 0;
         while current_pixel < n_pixels {
-            let chunk_start = current_pixel * T::bpp() as usize;
+            let chunk_start = current_pixel * T::BPP as usize;
             let mut current_byte = chunk_start;
             let mut run_length: u8 = 1;
             let mut raw = true;
-            while current_pixel + (run_length as usize) < n_pixels
-                && run_length < MAX_CHUNK_LENGTH.into()
+            while current_pixel + (run_length as usize) < n_pixels && run_length < MAX_CHUNK_LENGTH
             {
-                let mut succ_eq = true;
-                for i in 0..(T::bpp() as usize) {
-                    succ_eq = data[current_byte + i] == data[current_byte + i + T::bpp() as usize];
-                    if !succ_eq {
-                        break;
-                    }
-                }
-                current_byte += T::bpp() as usize;
+                let next_pixel = current_byte + (T::BPP as usize);
+                let succ_eq = data[current_byte..next_pixel]
+                    == data[next_pixel..next_pixel + (T::BPP as usize)];
+                current_byte += T::BPP as usize;
                 if run_length == 1 {
                     raw = !succ_eq;
                 }
@@ -154,13 +139,11 @@ impl<T: ColorSpace + Copy + Eq> Image<T> {
                 run_length - 1
             } else {
                 run_length + 127
-            }])
-            .expect("Can't write run length to TGA file");
+            }])?;
             out.write(
                 &data[chunk_start
-                    ..chunk_start + (if raw { run_length * T::bpp() } else { T::bpp() }) as usize],
-            )
-            .expect("Can't write RLE run to TGA file");
+                    ..chunk_start + (if raw { run_length * T::BPP } else { T::BPP }) as usize],
+            )?;
         }
         Ok(())
     }
@@ -176,10 +159,10 @@ impl<T: ColorSpace + Copy + Eq> Image<T> {
 
         let header = Header {
             idlength: 0,
-            bitsperpixel: T::bpp() << 3,
+            bitsperpixel: T::BPP << 3,
             width: self.width as u16,
             height: self.height as u16,
-            datatypecode: if T::bpp() == Grayscale::bpp() {
+            datatypecode: if T::BPP == Grayscale::BPP {
                 match rle {
                     true => 11,
                     false => 3,
