@@ -1,38 +1,9 @@
+use crate::geometry::Vec3;
+
 use std::{
     fs::File,
     io::{BufRead, BufReader},
 };
-
-use num::Float;
-
-#[derive(Debug)]
-pub struct Vec3<T: Float> {
-    pub x: T,
-    pub y: T,
-    pub z: T,
-}
-
-impl<T: Float> Vec3<T> {
-    pub fn new() -> Self {
-        Vec3 {
-            x: T::zero(),
-            y: T::zero(),
-            z: T::zero(),
-        }
-    }
-
-    pub fn from(x: T, y: T, z: T) -> Self {
-        Vec3 { x, y, z }
-    }
-
-    pub fn from_slice(slice: &[T]) -> Self {
-        Vec3 {
-            x: slice[0],
-            y: slice[1],
-            z: slice[2],
-        }
-    }
-}
 
 pub struct Model {
     pub vertices: Vec<Vec3<f32>>,
