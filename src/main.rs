@@ -24,9 +24,9 @@ fn main() {
         Vec2::from(130, 180),
     ];
 
-    triangle(&t0[0], &t0[1], &t0[2], &mut image, WHITE);
-    triangle(&t1[0], &t1[1], &t1[2], &mut image, WHITE);
-    triangle(&t2[0], &t2[1], &t2[2], &mut image, WHITE);
+    triangle(t0[0], t0[1], t0[2], &mut image, WHITE);
+    triangle(t1[0], t1[1], t1[2], &mut image, WHITE);
+    triangle(t2[0], t2[1], t2[2], &mut image, WHITE);
 
     image.write_to_file("output.tga", true, true).unwrap();
 }

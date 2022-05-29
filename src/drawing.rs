@@ -57,9 +57,9 @@ const GREEN: RGB = RGB { r: 0, g: 255, b: 0 };
 
 pub fn triangle(
     //<T: ColorSpace + Copy>(
-    t0: &Vec2<isize>,
-    t1: &Vec2<isize>,
-    t2: &Vec2<isize>,
+    t0: Vec2<isize>,
+    t1: Vec2<isize>,
+    t2: Vec2<isize>,
     image: &mut Image<RGB>,
     color: RGB,
 ) {
@@ -75,42 +75,15 @@ pub fn triangle(
     if t1.y > t2.y {
         (t1, t2) = (t2, t1);
     }
-    println!("Vertices: {:?}, {:?}, {:?}", t0, t1, t2);
-    let arun = (t0.y - t2.y) as f32 / (t0.x - t2.x) as f32;
-    let brun = (t0.y - t1.y) as f32 / (t0.x - t1.x) as f32;
-    let aintercept = t0.y as f32 - arun * t0.x as f32;
-    let bintercept = t0.y as f32 - brun * t0.x as f32;
-    for y in t0.y..t1.y {
-        line(
-            &Vec2 {
-                x: ((y as f32 - aintercept) / arun) as isize,
-                y,
-            },
-            &Vec2 {
-                x: ((y as f32 - bintercept) / brun) as isize,
-                y,
-            },
-            image,
-            RED,
-        );
+    let height = t2.y - t0.y;
+    for y in t0.y..=t1.y {
+        let segment_height = t1.y - t0.y + 1;
+        let alpha = (y - t0.y) as f32 / height as f32;
+        let beta = (y - t0.y) as f32 / segment_height as f32;
+        let a = t0 + (t2 - t0) * alpha;
+        let b = t0 + (t1 - t0) * beta;
+        line(&Vec2 { x: a.x, y }, &Vec2 { x: b.x, y }, image, color);
+        image.set(a.x as usize, y as usize, RED).unwrap();
+        image.set(b.x as usize, y as usize, GREEN).unwrap();
     }
-    let brun = (t1.y - t2.y) as f32 / (t1.x - t2.x) as f32;
-    let bintercept = t1.y as f32 - brun * t1.x as f32;
-    for y in t1.y..t2.y {
-        line(
-            &Vec2 {
-                x: ((y as f32 - aintercept) / arun) as isize,
-                y,
-            },
-            &Vec2 {
-                x: ((y as f32 - bintercept) / brun) as isize,
-                y,
-            },
-            image,
-            RED,
-        );
-    }
-    line(t0, t1, image, RED);
-    line(t1, t2, image, RED);
-    line(t2, t0, image, GREEN);
 }

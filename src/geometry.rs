@@ -1,6 +1,7 @@
 use num::Num;
+use std::ops::{Add, Mul, Sub};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Vec2<T: Num + Copy> {
     pub x: T,
     pub y: T,
@@ -22,6 +23,39 @@ impl<T: Num + Copy> Vec2<T> {
         Vec2 {
             x: slice[0],
             y: slice[1],
+        }
+    }
+}
+
+impl<T: Num + Copy> Sub for Vec2<T> {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Vec2 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
+
+impl<T: Num + Copy> Add for Vec2<T> {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Vec2 {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
+impl Mul<f32> for Vec2<isize> {
+    type Output = Self;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Vec2 {
+            x: (self.x as f32 * rhs) as isize,
+            y: (self.y as f32 * rhs) as isize,
         }
     }
 }
