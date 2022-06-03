@@ -75,15 +75,31 @@ pub fn triangle(
     if t1.y > t2.y {
         (t1, t2) = (t2, t1);
     }
-    let height = t2.y - t0.y;
-    for y in t0.y..=t1.y {
-        let segment_height = t1.y - t0.y + 1;
-        let alpha = (y - t0.y) as f32 / height as f32;
-        let beta = (y - t0.y) as f32 / segment_height as f32;
-        let a = t0 + (t2 - t0) * alpha;
-        let b = t0 + (t1 - t0) * beta;
-        line(&Vec2 { x: a.x, y }, &Vec2 { x: b.x, y }, image, color);
-        image.set(a.x as usize, y as usize, RED).unwrap();
-        image.set(b.x as usize, y as usize, GREEN).unwrap();
+    let height = (t2.y - t0.y) as f32;
+    let segment_height = (t1.y - t0.y) as f32;
+    for y in t0.y..t1.y {
+        let alpha = (y - t0.y) as f32 / height;
+        let beta = (y - t0.y) as f32 / segment_height;
+        let mut a = t0 + (t2 - t0) * alpha;
+        let mut b = t0 + (t1 - t0) * beta;
+        if a.x > b.x {
+            (a, b) = (b, a);
+        }
+        for x in a.x..=b.x {
+            image.set(x as usize, y as usize, color).unwrap();
+        }
+    }
+    let segment_height = (t2.y - t1.y) as f32;
+    for y in t1.y..=t2.y {
+        let alpha = (y - t0.y) as f32 / height;
+        let beta = (y - t1.y) as f32 / segment_height;
+        let mut a = t0 + (t2 - t0) * alpha;
+        let mut b = t1 + (t2 - t1) * beta;
+        if a.x > b.x {
+            (a, b) = (b, a);
+        }
+        for x in a.x..=b.x {
+            image.set(x as usize, y as usize, color).unwrap();
+        }
     }
 }

@@ -1,15 +1,16 @@
 use std::isize;
 
-use rustyrender::drawing::{line, triangle};
+use rustyrender::drawing::triangle;
 use rustyrender::geometry::Vec2;
-use rustyrender::model::Model;
 use rustyrender::tga::{Image, RGB};
 
+const GREEN: RGB = RGB { r: 0, g: 255, b: 0 };
 const WHITE: RGB = RGB {
     r: 255,
     g: 255,
     b: 255,
 };
+const RED: RGB = RGB { r: 255, g: 0, b: 0 };
 
 fn main() {
     let width = 200;
@@ -24,9 +25,9 @@ fn main() {
         Vec2::from(130, 180),
     ];
 
-    triangle(t0[0], t0[1], t0[2], &mut image, WHITE);
+    triangle(t0[0], t0[1], t0[2], &mut image, GREEN);
     triangle(t1[0], t1[1], t1[2], &mut image, WHITE);
-    triangle(t2[0], t2[1], t2[2], &mut image, WHITE);
+    triangle(t2[0], t2[1], t2[2], &mut image, RED);
 
     image.write_to_file("output.tga", true, true).unwrap();
 }
