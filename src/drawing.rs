@@ -1,4 +1,5 @@
 use core::f32;
+use std::mem::swap;
 
 use crate::geometry::Vec2;
 use crate::tga::{ColorSpace, Image, RGB};
@@ -15,13 +16,13 @@ pub fn line<T: ColorSpace + Copy>(
     let mut y1 = b.y;
     let mut steep = false;
     if (x0 - x1).abs() < (y0 - y1).abs() {
-        (x0, y0) = (y0, x0);
-        (x1, y1) = (y1, x1);
+        swap(&mut x0, &mut y0);
+        swap(&mut x1, &mut y1);
         steep = true;
     }
     if x0 > x1 {
-        (x0, x1) = (x1, x0);
-        (y0, y1) = (y1, y0);
+        swap(&mut x0, &mut x1);
+        swap(&mut y0, &mut y1);
     }
 
     let dx = x1 - x0;
@@ -63,43 +64,37 @@ pub fn triangle(
     image: &mut Image<RGB>,
     color: RGB,
 ) {
-    let mut t0 = t0;
-    let mut t1 = t1;
-    let mut t2 = t2;
+    let (mut t0, mut t1, mut t2) = (t0, t1, t2);
     if t0.y > t1.y {
-        (t0, t1) = (t1, t0);
+        swap(&mut t0, &mut t1);
     }
     if t0.y > t2.y {
-        (t0, t2) = (t2, t0);
+        swap(&mut t0, &mut t2);
     }
     if t1.y > t2.y {
-        (t1, t2) = (t2, t1);
+        swap(&mut t1, &mut t2);
     }
+
     let height = (t2.y - t0.y) as f32;
-    let segment_height = (t1.y - t0.y) as f32;
-    for y in t0.y..t1.y {
-        let alpha = (y - t0.y) as f32 / height;
-        let beta = (y - t0.y) as f32 / segment_height;
+    for i in 0..height as isize {
+        let second_half = i > (t1.y - t0.y) || t1.y == t0.y;
+        let segment_height = match second_half {
+            true => t2.y - t1.y,
+            false => t1.y - t0.y,
+        } as f32;
+
+        let alpha = i as f32 / height;
+        let beta = (i - if second_half { t1.y - t0.y } else { 0 }) as f32 / segment_height;
         let mut a = t0 + (t2 - t0) * alpha;
-        let mut b = t0 + (t1 - t0) * beta;
+        #[rustfmt::skip]
+        let mut b = if second_half { t1 + (t2 - t1) * beta }
+                              else { t0 + (t1 - t0) * beta };
+
         if a.x > b.x {
-            (a, b) = (b, a);
+            swap(&mut a, &mut b)
         }
         for x in a.x..=b.x {
-            image.set(x as usize, y as usize, color).unwrap();
-        }
-    }
-    let segment_height = (t2.y - t1.y) as f32;
-    for y in t1.y..=t2.y {
-        let alpha = (y - t0.y) as f32 / height;
-        let beta = (y - t1.y) as f32 / segment_height;
-        let mut a = t0 + (t2 - t0) * alpha;
-        let mut b = t1 + (t2 - t1) * beta;
-        if a.x > b.x {
-            (a, b) = (b, a);
-        }
-        for x in a.x..=b.x {
-            image.set(x as usize, y as usize, color).unwrap();
+            image.set(x as usize, (t0.y + i) as usize, color).unwrap();
         }
     }
 }
