@@ -194,4 +194,12 @@ impl<T: ColorSpace + Copy> Image<T> {
         out.write(FOOTER).expect("Error writing footer to TGA file");
         Ok(())
     }
+
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    pub fn height(&self) -> usize {
+        self.height
+    }
 }

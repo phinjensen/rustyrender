@@ -1,8 +1,8 @@
-use core::f32;
+use std::cmp::{max, min};
 use std::mem::swap;
 
-use crate::geometry::Vec2;
-use crate::tga::{ColorSpace, Image, RGB};
+use crate::geometry::{Vec2, Vec3};
+use crate::tga::{ColorSpace, Image};
 
 pub fn line<T: ColorSpace + Copy>(
     a: &Vec2<isize>,
@@ -53,48 +53,95 @@ pub fn line<T: ColorSpace + Copy>(
     }
 }
 
-const RED: RGB = RGB { r: 255, g: 0, b: 0 };
-const GREEN: RGB = RGB { r: 0, g: 255, b: 0 };
+fn bounding_box(
+    points: &[Vec2<isize>],
+    c_min: Vec2<isize>,
+    c_max: Vec2<isize>,
+) -> (Vec2<isize>, Vec2<isize>) {
+    (
+        Vec2 {
+            x: points
+                .iter()
+                .chain(&[c_max])
+                .map(|&p| max(c_min.x, p.x))
+                .min()
+                .unwrap_or(0),
+            y: points
+                .iter()
+                .chain(&[c_max])
+                .map(|&p| max(c_min.y, p.y))
+                .min()
+                .unwrap_or(0),
+        },
+        Vec2 {
+            x: points
+                .iter()
+                .chain(&[c_min])
+                .map(|&p| min(c_max.x, p.x))
+                .max()
+                .unwrap_or(0),
+            y: points
+                .iter()
+                .chain(&[c_min])
+                .map(|&p| min(c_max.y, p.y))
+                .max()
+                .unwrap_or(0),
+        },
+    )
+}
 
-pub fn triangle(
-    //<T: ColorSpace + Copy>(
+fn barycentric(t0: Vec2<isize>, t1: Vec2<isize>, t2: Vec2<isize>, p: Vec2<isize>) -> Vec3<f32> {
+    let a = Vec3 {
+        x: t2.x - t0.x,
+        y: t1.x - t0.x,
+        z: t0.x - p.x,
+    };
+    let u = a.cross_product(Vec3 {
+        x: t2.y - t0.y,
+        y: t1.y - t0.y,
+        z: t0.y - p.y,
+    });
+    if (u.z).abs() < 1 {
+        Vec3 {
+            x: -1.0,
+            y: 1.0,
+            z: 1.0,
+        }
+    } else {
+        Vec3 {
+            x: 1.0 - (u.x + u.y) as f32 / u.z as f32,
+            y: u.y as f32 / u.z as f32,
+            z: u.x as f32 / u.z as f32,
+        }
+    }
+}
+
+pub fn triangle<T: ColorSpace + Copy>(
     t0: Vec2<isize>,
     t1: Vec2<isize>,
     t2: Vec2<isize>,
-    image: &mut Image<RGB>,
-    color: RGB,
+    image: &mut Image<T>,
+    color: T,
 ) {
-    let (mut t0, mut t1, mut t2) = (t0, t1, t2);
-    if t0.y > t1.y {
-        swap(&mut t0, &mut t1);
-    }
-    if t0.y > t2.y {
-        swap(&mut t0, &mut t2);
-    }
-    if t1.y > t2.y {
-        swap(&mut t1, &mut t2);
-    }
+    let bbox = bounding_box(
+        &[t0, t1, t2],
+        Vec2 { x: 0, y: 0 },
+        Vec2 {
+            x: (image.width() - 1) as isize,
+            y: (image.height() - 1) as isize,
+        },
+    );
 
-    let height = (t2.y - t0.y) as f32;
-    for i in 0..height as isize {
-        let second_half = i > (t1.y - t0.y) || t1.y == t0.y;
-        let segment_height = match second_half {
-            true => t2.y - t1.y,
-            false => t1.y - t0.y,
-        } as f32;
-
-        let alpha = i as f32 / height;
-        let beta = (i - if second_half { t1.y - t0.y } else { 0 }) as f32 / segment_height;
-        let mut a = t0 + (t2 - t0) * alpha;
-        #[rustfmt::skip]
-        let mut b = if second_half { t1 + (t2 - t1) * beta }
-                              else { t0 + (t1 - t0) * beta };
-
-        if a.x > b.x {
-            swap(&mut a, &mut b)
-        }
-        for x in a.x..=b.x {
-            image.set(x as usize, (t0.y + i) as usize, color).unwrap();
+    let mut p = Vec2::<isize> { x: 0, y: 0 };
+    for x in bbox.0.x..=bbox.1.x {
+        p.x = x;
+        for y in bbox.0.y..=bbox.1.y {
+            p.y = y;
+            let bc_screen = barycentric(t0, t1, t2, p);
+            if bc_screen.x < 0.0 || bc_screen.y < 0.0 || bc_screen.z < 0.0 {
+                continue;
+            }
+            image.set(p.x as usize, p.y as usize, color).unwrap();
         }
     }
 }

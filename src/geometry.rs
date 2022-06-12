@@ -1,4 +1,4 @@
-use num::Num;
+use num::{traits::real::Real, FromPrimitive, Num, ToPrimitive};
 use std::ops::{Add, Mul, Sub};
 
 #[derive(Debug, Clone, Copy)]
@@ -60,14 +60,14 @@ impl Mul<f32> for Vec2<isize> {
     }
 }
 
-#[derive(Debug)]
-pub struct Vec3<T: Num + Copy> {
+#[derive(Debug, Clone, Copy)]
+pub struct Vec3<T: Num + ToPrimitive + Copy> {
     pub x: T,
     pub y: T,
     pub z: T,
 }
 
-impl<T: Num + Copy> Vec3<T> {
+impl<T: Num + ToPrimitive + Copy> Vec3<T> {
     pub fn new() -> Self {
         Vec3 {
             x: T::zero(),
@@ -85,6 +85,59 @@ impl<T: Num + Copy> Vec3<T> {
             x: slice[0],
             y: slice[1],
             z: slice[2],
+        }
+    }
+
+    pub fn cross_product(&self, other: Self) -> Self {
+        Vec3 {
+            x: self.y * other.z - self.z * other.y,
+            y: self.z * other.x - self.x * other.z,
+            z: self.x * other.y - self.y * other.x,
+        }
+    }
+
+    pub fn norm(&self) -> f32 {
+        (self.x * self.x + self.y * self.y + self.z * self.z)
+            .to_f32()
+            .unwrap()
+            .sqrt()
+    }
+
+    pub fn normalize(&self) -> Vec3<f32> {
+        *self * (1.0 / self.norm())
+    }
+}
+
+impl<T: Num + ToPrimitive + Copy> Sub for Vec3<T> {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Vec3 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+        }
+    }
+}
+
+impl<T: Num + ToPrimitive + Copy> Mul for Vec3<T> {
+    type Output = f32;
+
+    fn mul(self, rhs: Vec3<T>) -> Self::Output {
+        (self.x * rhs.x + self.y * rhs.y + self.z * rhs.z)
+            .to_f32()
+            .unwrap()
+    }
+}
+
+impl<T: Num + ToPrimitive + Copy> Mul<f32> for Vec3<T> {
+    type Output = Vec3<f32>;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Vec3 {
+            x: (self.x.to_f32().unwrap() * rhs),
+            y: (self.y.to_f32().unwrap() * rhs),
+            z: (self.z.to_f32().unwrap() * rhs),
         }
     }
 }
