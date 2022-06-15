@@ -1,16 +1,18 @@
 use std::isize;
+use std::mem::swap;
 
-use rustyrender::model::Model;
-use rustyrender::tga::{ColorSpace, Image, RGB};
+use rustyrender::{
+    model::Model,
+    tga::{ColorSpace, Image, RGB},
+};
 
-const RED: RGB = RGB { r: 255, g: 0, b: 0 };
 const WHITE: RGB = RGB {
     r: 255,
     g: 255,
     b: 255,
 };
 
-fn line<T: ColorSpace + Copy + Eq>(
+fn line<T: ColorSpace + Copy>(
     mut x0: isize,
     mut y0: isize,
     mut x1: isize,
@@ -18,15 +20,14 @@ fn line<T: ColorSpace + Copy + Eq>(
     image: &mut Image<T>,
     color: T,
 ) {
-    let mut steep = false;
-    if (x0 - x1).abs() < (y0 - y1).abs() {
-        (x0, y0) = (y0, x0);
-        (x1, y1) = (y1, x1);
-        steep = true;
+    let steep = (x0 - x1).abs() < (y0 - y1).abs();
+    if steep {
+        swap(&mut x0, &mut y0);
+        swap(&mut x1, &mut y1);
     }
     if x0 > x1 {
-        (x0, x1) = (x1, x0);
-        (y0, y1) = (y1, y0);
+        swap(&mut x0, &mut x1);
+        swap(&mut y0, &mut y1);
     }
 
     let dx = x1 - x0;
@@ -36,15 +37,11 @@ fn line<T: ColorSpace + Copy + Eq>(
     let mut y = y0;
 
     let mut x = x0;
-    loop {
-        if x > x1 {
-            break;
-        }
-
+    while x <= x1 {
         if steep {
-            image.set(y as usize, x as usize, color).ok();
+            image.set(y as usize, x as usize, color);
         } else {
-            image.set(x as usize, y as usize, color).ok();
+            image.set(x as usize, y as usize, color);
         }
 
         error2 += derror2;
@@ -61,6 +58,7 @@ fn main() {
     let width = 800;
     let height = 800;
     let mut image: Image<RGB> = Image::new(width, height);
+
     let model = Model::from("obj/african_head.obj").unwrap();
 
     for i in 0..model.num_faces() {
