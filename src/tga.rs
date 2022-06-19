@@ -29,19 +29,19 @@ pub trait ColorSpace {
     fn bpp() -> u8;
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone)]
 #[repr(packed)]
 pub struct Grayscale {
     pub i: u8,
 }
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone)]
 #[repr(packed)]
 pub struct RGB {
     pub b: u8,
     pub g: u8,
     pub r: u8,
 }
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone)]
 #[repr(packed)]
 pub struct RGBA {
     pub b: u8,
@@ -90,7 +90,7 @@ const DEVELOPER_AREA_REF: [u8; 4] = [0, 0, 0, 0];
 const EXTENSION_AREA_REF: [u8; 4] = [0, 0, 0, 0];
 const FOOTER: &[u8; 18] = b"TRUEVISION-XFILE.\0";
 
-impl<T: ColorSpace + Copy + Eq> Image<T> {
+impl<T: ColorSpace + Copy> Image<T> {
     pub fn new(width: usize, height: usize) -> Self {
         Image {
             width,

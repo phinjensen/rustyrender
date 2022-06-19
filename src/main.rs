@@ -39,9 +39,9 @@ fn line<T: ColorSpace + Copy>(
     let mut x = x0;
     while x <= x1 {
         if steep {
-            image.set(y as usize, x as usize, color);
+            image.set(y as usize, x as usize, color).ok();
         } else {
-            image.set(x as usize, y as usize, color);
+            image.set(x as usize, y as usize, color).ok();
         }
 
         error2 += derror2;
