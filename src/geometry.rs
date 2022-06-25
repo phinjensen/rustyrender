@@ -49,13 +49,13 @@ impl<T: Num + Copy> Add for Vec2<T> {
     }
 }
 
-impl Mul<f32> for Vec2<isize> {
+impl Mul<f64> for Vec2<isize> {
     type Output = Self;
 
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn mul(self, rhs: f64) -> Self::Output {
         Vec2 {
-            x: (self.x as f32 * rhs) as isize,
-            y: (self.y as f32 * rhs) as isize,
+            x: (self.x as f64 * rhs) as isize,
+            y: (self.y as f64 * rhs) as isize,
         }
     }
 }
@@ -96,14 +96,14 @@ impl<T: Num + ToPrimitive + Copy> Vec3<T> {
         }
     }
 
-    pub fn norm(&self) -> f32 {
+    pub fn norm(&self) -> f64 {
         (self.x * self.x + self.y * self.y + self.z * self.z)
-            .to_f32()
+            .to_f64()
             .unwrap()
             .sqrt()
     }
 
-    pub fn normalize(&self) -> Vec3<f32> {
+    pub fn normalize(&self) -> Vec3<f64> {
         *self * (1.0 / self.norm())
     }
 }
@@ -121,23 +121,23 @@ impl<T: Num + ToPrimitive + Copy> Sub for Vec3<T> {
 }
 
 impl<T: Num + ToPrimitive + Copy> Mul for Vec3<T> {
-    type Output = f32;
+    type Output = f64;
 
     fn mul(self, rhs: Vec3<T>) -> Self::Output {
         (self.x * rhs.x + self.y * rhs.y + self.z * rhs.z)
-            .to_f32()
+            .to_f64()
             .unwrap()
     }
 }
 
-impl<T: Num + ToPrimitive + Copy> Mul<f32> for Vec3<T> {
-    type Output = Vec3<f32>;
+impl<T: Num + ToPrimitive + Copy> Mul<f64> for Vec3<T> {
+    type Output = Vec3<f64>;
 
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn mul(self, rhs: f64) -> Self::Output {
         Vec3 {
-            x: (self.x.to_f32().unwrap() * rhs),
-            y: (self.y.to_f32().unwrap() * rhs),
-            z: (self.z.to_f32().unwrap() * rhs),
+            x: (self.x.to_f64().unwrap() * rhs),
+            y: (self.y.to_f64().unwrap() * rhs),
+            z: (self.z.to_f64().unwrap() * rhs),
         }
     }
 }

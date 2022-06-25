@@ -90,7 +90,7 @@ fn bounding_box(
     )
 }
 
-fn barycentric(t0: Vec2<isize>, t1: Vec2<isize>, t2: Vec2<isize>, p: Vec2<isize>) -> Vec3<f32> {
+fn barycentric(t0: Vec2<isize>, t1: Vec2<isize>, t2: Vec2<isize>, p: Vec2<isize>) -> Vec3<f64> {
     let a = Vec3 {
         x: t2.x - t0.x,
         y: t1.x - t0.x,
@@ -109,9 +109,9 @@ fn barycentric(t0: Vec2<isize>, t1: Vec2<isize>, t2: Vec2<isize>, p: Vec2<isize>
         }
     } else {
         Vec3 {
-            x: 1.0 - (u.x + u.y) as f32 / u.z as f32,
-            y: u.y as f32 / u.z as f32,
-            z: u.x as f32 / u.z as f32,
+            x: 1.0 - (u.x + u.y) as f64 / u.z as f64,
+            y: u.y as f64 / u.z as f64,
+            z: u.x as f64 / u.z as f64,
         }
     }
 }

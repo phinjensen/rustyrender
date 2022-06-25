@@ -11,7 +11,7 @@ fn main() {
     let mut image: Image<RGBA> = Image::new(width, height);
     let model = Model::from("obj/african_head.obj").unwrap();
 
-    let light_dir: Vec3<f32> = Vec3 {
+    let light_dir: Vec3<f64> = Vec3 {
         x: 0.0,
         y: 0.0,
         z: -1.0,
@@ -19,13 +19,13 @@ fn main() {
 
     for i in 0..model.num_faces() {
         let face = model.face(i);
-        let (screen_coords, world_coords): (Vec<Vec2<isize>>, Vec<Vec3<f32>>) = (0..3)
+        let (screen_coords, world_coords): (Vec<Vec2<isize>>, Vec<Vec3<f64>>) = (0..3)
             .map(|j| {
                 let world_coords = model.vertex(face[j]);
                 (
                     Vec2::<isize> {
-                        x: ((world_coords.x + 1.0) * width as f32 / 2.0) as isize,
-                        y: ((world_coords.y + 1.0) * width as f32 / 2.0) as isize,
+                        x: ((world_coords.x + 1.0) * width as f64 / 2.0) as isize,
+                        y: ((world_coords.y + 1.0) * width as f64 / 2.0) as isize,
                     },
                     world_coords,
                 )

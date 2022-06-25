@@ -6,15 +6,15 @@ use std::{
 };
 
 pub struct Model {
-    pub vertices: Vec<Vec3<f32>>,
+    pub vertices: Vec<Vec3<f64>>,
     pub faces: Vec<Vec<usize>>,
 }
 
-fn get_vertices(line: String) -> Result<Vec3<f32>, String> {
+fn get_vertices(line: String) -> Result<Vec3<f64>, String> {
     let result_array: Result<Vec<_>, _> = line
         .split_ascii_whitespace()
         .take(3)
-        .map(|x| x.parse::<f32>())
+        .map(|x| x.parse::<f64>())
         .collect();
     match result_array {
         Ok(arr) => Ok(Vec3::from_slice(arr.as_slice())),
@@ -72,7 +72,7 @@ impl Model {
         self.faces.len()
     }
 
-    pub fn vertex(&self, i: usize) -> &Vec3<f32> {
+    pub fn vertex(&self, i: usize) -> &Vec3<f64> {
         &self.vertices[i]
     }
 
