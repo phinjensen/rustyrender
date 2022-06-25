@@ -1,5 +1,11 @@
-use num::{traits::real::Real, FromPrimitive, Num, ToPrimitive};
-use std::ops::{Add, Mul, Sub};
+use num::{Num, ToPrimitive};
+use std::{
+    ops::{Add, Mul, Sub},
+    result,
+};
+
+pub type Result<T> = result::Result<T, &'static str>;
+const FLOAT_CONVERSION_MESSAGE: &str = "Error, couldn't convert value into f64";
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vec2<T: Num + Copy> {
@@ -96,15 +102,15 @@ impl<T: Num + ToPrimitive + Copy> Vec3<T> {
         }
     }
 
-    pub fn norm(&self) -> f64 {
-        (self.x * self.x + self.y * self.y + self.z * self.z)
+    pub fn norm(&self) -> Result<f64> {
+        Ok((self.x * self.x + self.y * self.y + self.z * self.z)
             .to_f64()
-            .unwrap()
-            .sqrt()
+            .ok_or(FLOAT_CONVERSION_MESSAGE)?
+            .sqrt())
     }
 
-    pub fn normalize(&self) -> Vec3<f64> {
-        *self * (1.0 / self.norm())
+    pub fn normalize(&self) -> Result<Vec3<f64>> {
+        *self * (1.0 / self.norm()?)
     }
 }
 
@@ -121,23 +127,23 @@ impl<T: Num + ToPrimitive + Copy> Sub for Vec3<T> {
 }
 
 impl<T: Num + ToPrimitive + Copy> Mul for Vec3<T> {
-    type Output = f64;
+    type Output = Result<f64>;
 
     fn mul(self, rhs: Vec3<T>) -> Self::Output {
-        (self.x * rhs.x + self.y * rhs.y + self.z * rhs.z)
+        Ok((self.x * rhs.x + self.y * rhs.y + self.z * rhs.z)
             .to_f64()
-            .unwrap()
+            .ok_or(FLOAT_CONVERSION_MESSAGE)?)
     }
 }
 
 impl<T: Num + ToPrimitive + Copy> Mul<f64> for Vec3<T> {
-    type Output = Vec3<f64>;
+    type Output = Result<Vec3<f64>>;
 
     fn mul(self, rhs: f64) -> Self::Output {
-        Vec3 {
-            x: (self.x.to_f64().unwrap() * rhs),
-            y: (self.y.to_f64().unwrap() * rhs),
-            z: (self.z.to_f64().unwrap() * rhs),
-        }
+        Ok(Vec3 {
+            x: (self.x.to_f64().ok_or(FLOAT_CONVERSION_MESSAGE)? * rhs),
+            y: (self.y.to_f64().ok_or(FLOAT_CONVERSION_MESSAGE)? * rhs),
+            z: (self.z.to_f64().ok_or(FLOAT_CONVERSION_MESSAGE)? * rhs),
+        })
     }
 }

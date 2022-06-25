@@ -1,11 +1,11 @@
 use std::isize;
 
 use rustyrender::drawing::triangle;
-use rustyrender::geometry::{Vec2, Vec3};
+use rustyrender::geometry::{self, Vec2, Vec3};
 use rustyrender::model::Model;
 use rustyrender::tga::{Image, RGBA};
 
-fn main() {
+fn main() -> geometry::Result<()> {
     let width = 800;
     let height = 800;
     let mut image: Image<RGBA> = Image::new(width, height);
@@ -33,8 +33,8 @@ fn main() {
             .unzip();
         let n =
             (world_coords[2] - world_coords[1]).cross_product(world_coords[1] - world_coords[0]);
-        let n = n.normalize();
-        let intensity = n * light_dir;
+        let n = n.normalize().unwrap();
+        let intensity = (n * light_dir).unwrap();
         if intensity > 0.0 {
             triangle(
                 screen_coords[0],
@@ -52,4 +52,5 @@ fn main() {
     }
 
     image.write_to_file("output.tga", true, true).unwrap();
+    Ok(())
 }
